@@ -78,16 +78,20 @@ python worker.py             # 계속 떠서 새 업로드를 감시
 - 최초 실행 시 `ultralytics`가 `yolo11n-pose.pt` 가중치를 자동 다운로드합니다(인터넷 필요).
 - `ffmpeg` 바이너리가 시스템에 설치되어 있어야 합니다 (`brew install ffmpeg` 등).
 
-### 2-1. 워커를 EC2 + Docker Compose로 상시 운영하기
+### 2-1. 워커를 EC2 + Docker Swarm으로 상시 운영하기
 
 로컬 터미널을 계속 띄워둘 수 없으므로, 실제로는 워커를 EC2 같은 상시 켜진 서버에
 Docker로 올린다. 워커는 Supabase를 **폴링(pull)** 하는 구조라 인바운드 트래픽이
 전혀 없다 — 즉 EC2에 nginx나 SSL 인증서를 붙일 필요가 없다. 보안그룹도 SSH(22)만
 본인 IP로 열면 된다.
 
+`docker compose`(플러그인) 대신 **`docker service` / swarm 모드**로 배포한다.
+`build.sh`가 이미지를 빌드하고, `deploy.sh`가 swarm 모드를 초기화한 뒤
+(최초 1회) 서비스로 띄운다.
+
 ```bash
-# EC2 (Ubuntu 22.04 기준, t3.medium 이상 권장 - torch/ultralytics 메모리 사용)
-sudo apt-get update && sudo apt-get install -y docker.io docker-compose-plugin git
+# EC2 (Ubuntu 22.04+, t3.medium 이상 권장 - torch/ultralytics 메모리 사용)
+sudo apt-get update && sudo apt-get install -y docker.io git
 sudo systemctl enable --now docker
 sudo usermod -aG docker $USER   # 재로그인 후 적용
 
@@ -95,15 +99,17 @@ git clone <repo-url> scene-stiller
 cd scene-stiller
 cp .env.example .env            # Supabase / OpenAI / 워커 설정값 채우기 (아래 참고)
 
-docker compose up -d --build
-docker compose logs -f worker   # 정상 폴링 로그 확인
+./build.sh && ./deploy.sh
+docker service logs -f scene-stiller-worker   # 정상 폴링 로그 확인
 ```
 
-- `restart: always` + `docker` 데몬 자동시작(`systemctl enable docker`) 조합으로
-  컨테이너 크래시나 EC2 재부팅에도 자동 복구된다.
+- `docker service create --restart-condition any`로 컨테이너 크래시 시 swarm이
+  자동 재시작한다. `docker` 데몬을 `systemctl enable`해두면 EC2 재부팅 후에도
+  swarm/서비스 상태가 복구된다.
 - Next.js 앱(Vercel)과 EC2 워커는 서로 직접 통신하지 않고 Supabase를 통해서만
   간접적으로 연결된다 — 배포 순서 신경 쓸 필요 없음.
-- 코드 갱신 시: `git pull && docker compose up -d --build`
+- 코드 갱신 시: `git pull && ./build.sh && ./deploy.sh` (폴링 데몬이라 무중단
+  롤링업데이트가 필요 없어서 `deploy.sh`는 기존 서비스를 내리고 새로 만든다).
 
 ### 3. 데모 흐름 확인
 
