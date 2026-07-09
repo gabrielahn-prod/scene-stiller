@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { AiReportRow, AnomalyEventRow, VideoRow } from "@/lib/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const REPORT_MODEL = process.env.OPENAI_REPORT_MODEL ?? "gpt-5.4-mini";
 
@@ -112,7 +113,11 @@ function extractOutputText(responseJson: any) {
   return typeof text === "string" && text.length > 0 ? text : null;
 }
 
-async function generateReportWithOpenAI(video: VideoRow, events: AnomalyEventRow[]) {
+async function generateReportWithOpenAI(
+  supabase: SupabaseClient,
+  video: VideoRow,
+  events: AnomalyEventRow[]
+) {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY가 설정되어 있지 않습니다. root .env 또는 배포 환경 변수에 추가해 주세요.");
   }
@@ -138,6 +143,34 @@ async function generateReportWithOpenAI(video: VideoRow, events: AnomalyEventRow
     })),
   };
 
+  // 탐지 구간마다 뽑아둔 썸네일을 GPT가 실제로 보고 해석하도록 이미지로 첨부한다.
+  const eventThumbnails = await Promise.all(
+    events.map(async (event) => {
+      if (!event.thumbnail_storage_path) return null;
+      const { data } = await supabase.storage
+        .from("clips")
+        .createSignedUrl(event.thumbnail_storage_path, 600);
+      return data?.signedUrl
+        ? {
+            label: `${formatSeconds(event.start_time_sec)}-${formatSeconds(event.end_time_sec)} / person #${event.track_id}`,
+            url: data.signedUrl,
+          }
+        : null;
+    })
+  );
+
+  const userContent: Array<Record<string, unknown>> = [
+    {
+      type: "input_text",
+      text: `다음 영상 분석 결과로 제출용 보고서 JSON을 작성해 주세요. 이어서 각 탐지 구간의 스냅샷 이미지를 보여드릴 테니, 점수만 보고 판단하지 말고 이미지 속 사람의 행동/자세/주변 상황을 직접 관찰해서 finding과 evidenceSummary에 반영해 주세요.\n${JSON.stringify(payload, null, 2)}`,
+    },
+  ];
+  for (const thumb of eventThumbnails) {
+    if (!thumb) continue;
+    userContent.push({ type: "input_text", text: `[구간 ${thumb.label} 스냅샷]` });
+    userContent.push({ type: "input_image", image_url: thumb.url });
+  }
+
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
@@ -150,11 +183,11 @@ async function generateReportWithOpenAI(video: VideoRow, events: AnomalyEventRow
         {
           role: "system",
           content:
-            "너는 한국어 CCTV/이상행동 분석 보고서를 작성하는 보조자다. 경찰 또는 보험사 제출에 적합한 사실 중심 문서 초안을 작성한다. 탐지 결과를 범죄 확정처럼 단정하지 말고, AI 탐지 후보와 확인 필요 사항을 분리한다.",
+            "너는 한국어 CCTV/이상행동 분석 보고서를 작성하는 보조자다. 경찰 또는 보험사 제출에 적합한 사실 중심 문서 초안을 작성한다. 함께 제공되는 탐지 구간 스냅샷 이미지를 직접 관찰해서 사람의 행동/자세/주변 물건 등 시각적 근거를 반영하고, 이미지만으로 단정할 수 없는 부분은 한계로 명시한다. 탐지 결과를 범죄 확정처럼 단정하지 말고, AI 탐지 후보와 확인 필요 사항을 분리한다.",
         },
         {
           role: "user",
-          content: `다음 영상 분석 결과로 제출용 보고서 JSON을 작성해 주세요.\n${JSON.stringify(payload, null, 2)}`,
+          content: userContent,
         },
       ],
       text: {
@@ -275,7 +308,7 @@ export async function createReportForVideo(formData: FormData) {
   }
 
   try {
-    const generated = await generateReportWithOpenAI(video, events ?? []);
+    const generated = await generateReportWithOpenAI(supabase, video, events ?? []);
     const { error: updateError } = await (supabase.from("ai_reports") as any)
       .update({
         title: generated.reportJson.title || title,
