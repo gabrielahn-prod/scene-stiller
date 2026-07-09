@@ -33,22 +33,8 @@ export default function UploadForm() {
       return;
     }
 
-    // 워커가 나중에 이 video row를 만들어야 storage_path 규칙(user_id/video_id/filename)을
-    // 지킬 수 있으므로, video row를 먼저 만들고 그 id로 storage 경로를 정한다.
-    setProgress("creating");
-    const { data: videoRow, error: insertError } = await supabase
-      .from("videos")
-      .insert({ user_id: user.id, filename: file.name, storage_path: "", status: "uploaded" })
-      .select()
-      .single();
-
-    if (insertError || !videoRow) {
-      setErrorMsg(insertError?.message ?? "영상 레코드 생성 실패");
-      setProgress("error");
-      return;
-    }
-
-    const storagePath = `${user.id}/${videoRow.id}/${getSafeStorageFilename(file)}`;
+    const videoId = crypto.randomUUID();
+    const storagePath = `${user.id}/${videoId}/${getSafeStorageFilename(file)}`;
 
     setProgress("uploading");
     const { error: uploadError } = await supabase.storage
@@ -61,13 +47,18 @@ export default function UploadForm() {
       return;
     }
 
-    const { error: updateError } = await supabase
+    // 파일 업로드가 끝난 뒤에만 status='uploaded' row를 만들면 워커가 빈 storage_path를
+    // 먼저 집어가는 레이스를 피할 수 있다.
+    setProgress("creating");
+    const { data: videoRow, error: insertError } = await supabase
       .from("videos")
-      .update({ storage_path: storagePath })
-      .eq("id", videoRow.id);
+      .insert({ id: videoId, user_id: user.id, filename: file.name, storage_path: storagePath, status: "uploaded" })
+      .select()
+      .single();
 
-    if (updateError) {
-      setErrorMsg(updateError.message);
+    if (insertError || !videoRow) {
+      await supabase.storage.from("videos").remove([storagePath]);
+      setErrorMsg(insertError?.message ?? "영상 레코드 생성 실패");
       setProgress("error");
       return;
     }

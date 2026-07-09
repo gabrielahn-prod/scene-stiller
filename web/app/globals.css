@@ -83,3 +83,5 @@ input:focus {
 .status-processing { background: #fef3c7; color: #92400e; }
 .status-done { background: #dcfce7; color: #166534; }
 .status-failed { background: #fee2e2; color: #b91c1c; }
+.status-queued { background: #e2e8f0; color: #475569; }
+.status-generating { background: #dbeafe; color: #1d4ed8; }
