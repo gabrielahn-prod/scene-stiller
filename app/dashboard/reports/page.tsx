@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { deleteReport } from "@/app/dashboard/reports/actions";
 import { createClient } from "@/lib/supabase/server";
 import type { AiReportRow } from "@/lib/types";
 
@@ -27,20 +28,27 @@ export default async function ReportsPage() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {reports.map((report) => (
-            <Link
+            <div
               key={report.id}
-              href={`/dashboard/reports/${report.id}`}
               className="card"
               style={{ display: "flex", justifyContent: "space-between", alignItems: "center", textDecoration: "none" }}
             >
-              <div>
+              <Link href={`/dashboard/reports/${report.id}`} style={{ textDecoration: "none", flex: 1 }}>
                 <div style={{ fontWeight: 600 }}>{report.title}</div>
                 <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
                   {new Date(report.created_at).toLocaleString("ko-KR")}
                 </div>
+              </Link>
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <span className={`status-badge status-${report.status}`}>{STATUS_LABEL[report.status]}</span>
+                <form action={deleteReport}>
+                  <input type="hidden" name="reportId" value={report.id} />
+                  <button className="btn btn-danger" type="submit">
+                    삭제
+                  </button>
+                </form>
               </div>
-              <span className={`status-badge status-${report.status}`}>{STATUS_LABEL[report.status]}</span>
-            </Link>
+            </div>
           ))}
         </div>
       )}

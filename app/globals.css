@@ -56,6 +56,11 @@ input, button {
   color: #0f172a;
 }
 
+.btn-danger {
+  background: #dc2626;
+  color: #ffffff;
+}
+
 input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="file"] {
   width: 100%;
   padding: 10px 12px;

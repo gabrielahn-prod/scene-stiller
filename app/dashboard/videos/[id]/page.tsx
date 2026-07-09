@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { createReportForVideo } from "@/app/dashboard/reports/actions";
+import { deleteVideo } from "@/app/dashboard/videos/actions";
 import { createClient } from "@/lib/supabase/server";
 import type { AnomalyEventRow, VideoRow } from "@/lib/types";
 
@@ -56,14 +57,22 @@ export default async function VideoDetailPage({ params }: { params: { id: string
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 4 }}>
         <h1 style={{ fontSize: 20, margin: 0 }}>{video.filename}</h1>
-        {video.status === "done" && (
-          <form action={createReportForVideo}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          {video.status === "done" && (
+            <form action={createReportForVideo}>
+              <input type="hidden" name="videoId" value={video.id} />
+              <button className="btn" type="submit">
+                보고서 생성하기
+              </button>
+            </form>
+          )}
+          <form action={deleteVideo}>
             <input type="hidden" name="videoId" value={video.id} />
-            <button className="btn" type="submit">
-              보고서 생성하기
+            <button className="btn btn-danger" type="submit">
+              삭제
             </button>
           </form>
-        )}
+        </div>
       </div>
       <p style={{ color: "#64748b", fontSize: 13, marginBottom: 20 }}>
         상태:{" "}

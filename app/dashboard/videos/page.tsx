@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { deleteVideo } from "@/app/dashboard/videos/actions";
 import { createClient } from "@/lib/supabase/server";
 import type { VideoRow } from "@/lib/types";
 
@@ -34,20 +35,27 @@ export default async function VideosPage() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {videos.map((v) => (
-            <Link
+            <div
               key={v.id}
-              href={`/dashboard/videos/${v.id}`}
               className="card"
               style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
             >
-              <div>
+              <Link href={`/dashboard/videos/${v.id}`} style={{ textDecoration: "none", flex: 1 }}>
                 <div style={{ fontWeight: 600 }}>{v.filename}</div>
                 <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
                   {new Date(v.created_at).toLocaleString("ko-KR")}
                 </div>
+              </Link>
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <span className={`status-badge status-${v.status}`}>{STATUS_LABEL[v.status]}</span>
+                <form action={deleteVideo}>
+                  <input type="hidden" name="videoId" value={v.id} />
+                  <button className="btn btn-danger" type="submit">
+                    삭제
+                  </button>
+                </form>
               </div>
-              <span className={`status-badge status-${v.status}`}>{STATUS_LABEL[v.status]}</span>
-            </Link>
+            </div>
           ))}
         </div>
       )}

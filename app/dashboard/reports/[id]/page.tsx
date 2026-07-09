@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { deleteReport } from "@/app/dashboard/reports/actions";
 import { createClient } from "@/lib/supabase/server";
 import type { AiReportRow, AnomalyEventRow, VideoRow } from "@/lib/types";
 
@@ -49,9 +50,17 @@ export default async function ReportDetailPage({ params }: { params: { id: strin
             {report.ai_model && <> · 모델 {report.ai_model}</>}
           </p>
         </div>
-        <Link className="btn btn-secondary" href={video ? `/dashboard/videos/${video.id}` : "/dashboard/videos"}>
-          원본 영상 보기
-        </Link>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <Link className="btn btn-secondary" href={video ? `/dashboard/videos/${video.id}` : "/dashboard/videos"}>
+            원본 영상 보기
+          </Link>
+          <form action={deleteReport}>
+            <input type="hidden" name="reportId" value={report.id} />
+            <button className="btn btn-danger" type="submit">
+              삭제
+            </button>
+          </form>
+        </div>
       </div>
 
       {report.status === "failed" && (

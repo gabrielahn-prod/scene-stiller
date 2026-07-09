@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { AiReportRow, AnomalyEventRow, VideoRow } from "@/lib/types";
 
@@ -113,7 +114,7 @@ function extractOutputText(responseJson: any) {
 
 async function generateReportWithOpenAI(video: VideoRow, events: AnomalyEventRow[]) {
   if (!process.env.OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY가 설정되어 있지 않습니다. web/.env 또는 배포 환경 변수에 추가해 주세요.");
+    throw new Error("OPENAI_API_KEY가 설정되어 있지 않습니다. root .env 또는 배포 환경 변수에 추가해 주세요.");
   }
 
   const fallback = buildFallbackReport(video, events);
@@ -304,4 +305,36 @@ export async function createReportForVideo(formData: FormData) {
 
   revalidatePath("/dashboard/reports");
   redirect(`/dashboard/reports/${report.id}`);
+}
+
+export async function deleteReport(formData: FormData) {
+  const reportId = String(formData.get("reportId") ?? "");
+  if (!reportId) {
+    redirect("/dashboard/reports");
+  }
+
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: reportRow } = await (supabase.from("ai_reports") as any)
+    .select("*")
+    .eq("id", reportId)
+    .single();
+  const report = reportRow as AiReportRow | null;
+
+  if (!report || report.user_id !== user.id) {
+    redirect("/dashboard/reports");
+  }
+
+  const admin = createAdminClient();
+  await admin.from("ai_reports").delete().eq("id", report.id).eq("user_id", user.id);
+
+  revalidatePath("/dashboard/reports");
+  redirect("/dashboard/reports");
 }
