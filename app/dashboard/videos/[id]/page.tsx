@@ -49,7 +49,15 @@ export default async function VideoDetailPage({ params }: { params: { id: string
         ? (await supabase.storage.from("clips").createSignedUrl(ev.thumbnail_storage_path, 3600))
             .data?.signedUrl
         : null;
-      return { ...ev, clipUrl, thumbUrl };
+      const downloadName = `${video.filename.replace(/\.[^.]+$/, "")}_${formatTime(ev.start_time_sec)}-${formatTime(ev.end_time_sec)}.mp4`;
+      const clipDownloadUrl = ev.clip_storage_path
+        ? (
+            await supabase.storage
+              .from("clips")
+              .createSignedUrl(ev.clip_storage_path, 3600, { download: downloadName })
+          ).data?.signedUrl
+        : null;
+      return { ...ev, clipUrl, thumbUrl, clipDownloadUrl };
     })
   );
 
@@ -120,6 +128,16 @@ export default async function VideoDetailPage({ params }: { params: { id: string
                 이상 점수 <strong>{ev.anomaly_score.toFixed(3)}</strong>{" "}
                 <span style={{ color: "#64748b" }}>(임계값 {ev.threshold.toFixed(3)})</span>
               </div>
+              {ev.clipDownloadUrl && (
+                <a
+                  href={ev.clipDownloadUrl}
+                  download
+                  className="btn"
+                  style={{ display: "inline-block", marginTop: 10 }}
+                >
+                  영상 다운로드
+                </a>
+              )}
             </div>
           ))}
         </div>
