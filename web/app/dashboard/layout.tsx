@@ -28,7 +28,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       >
         <nav style={{ display: "flex", gap: 16, alignItems: "center" }}>
           <Link href="/dashboard/videos" style={{ fontWeight: 700 }}>
-            nonMarket
+            Scene Stealer
           </Link>
           <Link href="/dashboard/videos" style={{ fontSize: 14, color: "#64748b" }}>
             내 영상

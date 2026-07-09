@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
-const INTERNAL_EMAIL_DOMAIN = "nonmarket.app";
+const INTERNAL_EMAIL_DOMAIN = "scene-stealer.app";
 
 function getText(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
@@ -93,7 +93,7 @@ export async function signUp(formData: FormData) {
     email = identifierToEmail(getText(formData, "identifier"));
     metadata = getOwnerMetadata(formData);
   } catch (error) {
-    redirect(`/login?error=${encodeURIComponent((error as Error).message)}`);
+    redirect(`/signup?error=${encodeURIComponent((error as Error).message)}`);
   }
 
   const identifier = getText(formData, "identifier").toLowerCase();
@@ -102,7 +102,7 @@ export async function signUp(formData: FormData) {
 
   if (!serviceRoleKey) {
     redirect(
-      `/login?error=${encodeURIComponent(
+      `/signup?error=${encodeURIComponent(
         "회원가입 설정이 필요합니다. Vercel에 SUPABASE_SERVICE_ROLE_KEY를 추가해주세요."
       )}`
     );
@@ -123,7 +123,7 @@ export async function signUp(formData: FormData) {
   });
 
   if (createError) {
-    redirect(`/login?error=${encodeURIComponent(createError.message)}`);
+    redirect(`/signup?error=${encodeURIComponent(createError.message)}`);
   }
 
   const userId = createdUser.user?.id;
@@ -135,7 +135,7 @@ export async function signUp(formData: FormData) {
   const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
   if (signInError) {
-    redirect(`/login?error=${encodeURIComponent(signInError.message)}`);
+    redirect(`/signup?error=${encodeURIComponent(signInError.message)}`);
   }
 
   revalidatePath("/", "layout");
