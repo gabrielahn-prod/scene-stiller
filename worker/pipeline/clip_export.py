@@ -11,8 +11,9 @@ def extract_clip(
 ) -> None:
     """[start_sec, end_sec] 구간을 앞뒤로 pad_sec만큼 여유를 두고 잘라낸다.
 
-    -ss를 -i 뒤에 둬서(느리지만 프레임 정확한) 정확한 구간 컷을 보장한다.
-    클립은 짧으므로(수 초) 재인코딩 비용은 무시할 만하다.
+    -ss를 -i 앞에 둬서(키프레임 단위 fast seek) 긴 원본 영상에서도 seek 지점까지
+    전체를 디코딩하지 않고 바로 점프한다. 클립 앞뒤 pad_sec(기본 1초) 패딩이 있어서
+    키프레임 단위 오차(보통 1~2초 이내)는 클립 내용에 실질적 영향이 없다.
     """
 
     start = max(0.0, start_sec - pad_sec)
@@ -23,8 +24,8 @@ def extract_clip(
 
     cmd = [
         "ffmpeg", "-y",
-        "-i", video_path,
         "-ss", f"{start:.3f}",
+        "-i", video_path,
         "-t", f"{duration:.3f}",
         "-c:v", "libx264",
         "-c:a", "aac",
