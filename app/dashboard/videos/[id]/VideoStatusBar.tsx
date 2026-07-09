@@ -26,27 +26,33 @@ export function VideoStatusBar({
   const router = useRouter();
 
   useEffect(() => {
-    const supabase = createClient();
-    const channel = supabase
-      .channel(`video-status-${videoId}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "videos", filter: `id=eq.${videoId}` },
-        (payload) => {
-          const next = payload.new as { status: VideoStatus; progress: number };
-          setStatus(next.status);
-          setProgress(next.progress);
-          if (next.status === "done" || next.status === "failed") {
-            router.refresh();
-          }
-        }
-      )
-      .subscribe();
+    if (status !== "uploaded" && status !== "processing") return;
 
-    return () => {
-      supabase.removeChannel(channel);
+    const supabase = createClient();
+    let cancelled = false;
+
+    const tick = async () => {
+      const { data } = await supabase
+        .from("videos")
+        .select("status,progress")
+        .eq("id", videoId)
+        .single<{ status: VideoStatus; progress: number }>();
+
+      if (cancelled || !data) return;
+
+      setStatus(data.status);
+      setProgress(data.progress);
+      if (data.status === "done" || data.status === "failed") {
+        router.refresh();
+      }
     };
-  }, [videoId, router]);
+
+    const interval = setInterval(tick, 2000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [videoId, router, status]);
 
   return (
     <div style={{ marginBottom: 20 }}>
