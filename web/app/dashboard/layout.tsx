@@ -7,6 +7,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const loginId =
+    typeof user?.user_metadata?.login_id === "string"
+      ? user.user_metadata.login_id
+      : user?.email?.split("@")[0];
+  const ownerName =
+    typeof user?.user_metadata?.owner_name === "string" ? user.user_metadata.owner_name : null;
 
   return (
     <div>
@@ -31,7 +37,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </Link>
         </nav>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <span style={{ fontSize: 13, color: "#9aa4bf" }}>{user?.email}</span>
+          <span style={{ fontSize: 13, color: "#9aa4bf" }}>
+            {ownerName ? `${ownerName} 사장님` : loginId}
+          </span>
           <form action={signOut}>
             <button className="btn btn-secondary" type="submit">
               로그아웃

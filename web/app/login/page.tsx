@@ -6,21 +6,80 @@ export default function LoginPage({
   searchParams: { error?: string; notice?: string };
 }) {
   return (
-    <div className="container" style={{ maxWidth: 420 }}>
+    <div className="container" style={{ maxWidth: 520 }}>
       <h1 style={{ fontSize: 22, marginBottom: 4 }}>nonMarket 이상행동 탐지 데모</h1>
       <p style={{ color: "#9aa4bf", fontSize: 14, marginBottom: 24 }}>
-        로그인 후 본인이 업로드한 영상의 이상행동 탐지 보고서를 확인할 수 있습니다.
+        아이디와 비밀번호로 가입하고 본인이 업로드한 영상의 이상행동 탐지 보고서를 확인할 수 있습니다.
       </p>
 
       <form className="card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <label style={{ fontSize: 13, color: "#9aa4bf" }}>
-          이메일
-          <input type="email" name="email" required style={{ marginTop: 6 }} />
+          아이디
+          <input
+            type="text"
+            name="identifier"
+            required
+            minLength={3}
+            maxLength={32}
+            pattern="[a-z0-9._-]+"
+            autoComplete="username"
+            placeholder="예: nonmarket01"
+            style={{ marginTop: 6 }}
+          />
         </label>
         <label style={{ fontSize: 13, color: "#9aa4bf" }}>
           비밀번호
-          <input type="password" name="password" required minLength={6} style={{ marginTop: 6 }} />
+          <input
+            type="password"
+            name="password"
+            required
+            minLength={6}
+            autoComplete="current-password"
+            style={{ marginTop: 6 }}
+          />
         </label>
+
+        <div
+          style={{
+            borderTop: "1px solid #262b38",
+            marginTop: 4,
+            paddingTop: 16,
+            display: "grid",
+            gap: 12,
+          }}
+        >
+          <p style={{ color: "#e6e9ef", fontSize: 14, fontWeight: 700, margin: 0 }}>
+            회원가입 정보
+          </p>
+          <label style={{ fontSize: 13, color: "#9aa4bf" }}>
+            사장님 이름
+            <input
+              type="text"
+              name="ownerName"
+              required
+              autoComplete="name"
+              style={{ marginTop: 6 }}
+            />
+          </label>
+          <label style={{ fontSize: 13, color: "#9aa4bf" }}>
+            나이
+            <input type="number" name="ownerAge" required min={1} max={120} style={{ marginTop: 6 }} />
+          </label>
+          <label style={{ fontSize: 13, color: "#9aa4bf" }}>
+            매장 수
+            <input type="number" name="storeCount" required min={1} max={999} style={{ marginTop: 6 }} />
+          </label>
+          <label style={{ fontSize: 13, color: "#9aa4bf" }}>
+            어떤 매장(사업자 이름)
+            <input
+              type="text"
+              name="businessName"
+              required
+              placeholder="예: 홍길동 분식 강남점"
+              style={{ marginTop: 6 }}
+            />
+          </label>
+        </div>
 
         {searchParams.error && (
           <p style={{ color: "#ff6b6b", fontSize: 13 }}>{searchParams.error}</p>
@@ -30,7 +89,7 @@ export default function LoginPage({
         )}
 
         <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-          <button className="btn" formAction={signIn} style={{ flex: 1 }}>
+          <button className="btn" formAction={signIn} formNoValidate style={{ flex: 1 }}>
             로그인
           </button>
           <button className="btn btn-secondary" formAction={signUp} style={{ flex: 1 }}>
