@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-const INTERNAL_EMAIL_DOMAIN = "nonmarket.local";
+const INTERNAL_EMAIL_DOMAIN = "nonmarket.app";
 
 function getText(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
