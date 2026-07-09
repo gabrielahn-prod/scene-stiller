@@ -78,6 +78,17 @@ def mark_failed(sb: Client, video_id: str, error_message: str) -> None:
     ).eq("id", video_id).execute()
 
 
+def video_exists(sb: Client, video_id: str) -> bool:
+    res = (
+        sb.table("videos")
+        .select("id")
+        .eq("id", video_id)
+        .limit(1)
+        .execute()
+    )
+    return bool(res.data)
+
+
 def process_one(sb: Client, video_row: dict) -> None:
     video_id = video_row["id"]
     user_id = video_row["user_id"]
@@ -108,6 +119,10 @@ def process_one(sb: Client, video_row: dict) -> None:
         )
 
         # 5) 클립/썸네일 업로드 + anomaly_events insert
+        if not video_exists(sb, video_id):
+            print(f"[worker] skipped deleted video_id={video_id}")
+            return
+
         for seg, clip_path, thumb_path in results:
             clip_storage_path = f"{user_id}/{video_id}/{clip_path.name}"
             thumb_storage_path = f"{user_id}/{video_id}/{thumb_path.name}"
