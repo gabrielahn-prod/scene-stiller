@@ -5,10 +5,11 @@ Supabase의 `videos` 테이블을 폴링하며 status='uploaded'인 영상을 �
 (3) 오토인코더 이상행동 탐지 -> (4) ffmpeg 클립/썸네일 추출 -> (5) 결과 업로드 및
 DB 반영까지 수행한다.
 
-실행: python worker.py   (계속 떠 있으면서 새 업로드를 감시하는 데몬 프로세스)
+실행: cd worker && .venv/bin/python worker.py
+(계속 떠 있으면서 새 업로드를 감시하는 데몬 프로세스)
 
 Vercel 같은 서버리스 환경은 장시간 실행되는 ML 추론에 맞지 않기 때문에,
-프론트엔드(web/, Next.js)와 이 워커는 별도 프로세스/서버로 분리되어 있다.
+Next.js 앱과 이 워커는 별도 프로세스/서버로 분리되어 있다.
 로컬 머신이나 GPU가 있는 별도 서버에서 상시 실행하는 것을 전제로 한다.
 """
 
@@ -25,10 +26,11 @@ from supabase import Client, create_client
 
 from pipeline.report import process_video
 
-load_dotenv()
+ROOT_DIR = Path(__file__).resolve().parents[1]
+load_dotenv(ROOT_DIR / ".env")
 
-SUPABASE_URL = os.environ["SUPABASE_URL"]
-SUPABASE_SERVICE_KEY = os.environ["SUPABASE_SERVICE_KEY"]
+SUPABASE_URL = os.environ.get("SUPABASE_URL") or os.environ["NEXT_PUBLIC_SUPABASE_URL"]
+SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY") or os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 POLL_INTERVAL_SEC = float(os.environ.get("POLL_INTERVAL_SEC", "5"))
 POSE_MODEL = os.environ.get("POSE_MODEL", "yolo11n-pose.pt")
 WORK_DIR = Path(os.environ.get("WORK_DIR", "./tmp"))

@@ -8,7 +8,7 @@
 ```
 ┌─────────────┐   업로드(브라우저→Storage 직접)   ┌──────────────────┐
 │   Next.js   │ ───────────────────────────────▶ │ Supabase          │
-│  (web/)     │                                   │  - Auth            │
+│  (repo root)│                                   │  - Auth            │
 │ 로그인/업로드│ ◀──── videos/anomaly_events 조회 ──│  - Postgres(RLS)   │
 │ /보고서 UI  │                                   │  - Storage(videos, │
 └─────────────┘                                   │    clips 버킷)     │
@@ -26,7 +26,7 @@
                                                    └──────────────────┘
 ```
 
-- **web/** — Next.js(App Router) 프론트엔드. Supabase Auth로 로그인, 영상 업로드는
+- **repo root** — Next.js(App Router) 프론트엔드. Supabase Auth로 로그인, 영상 업로드는
   브라우저에서 Supabase Storage로 직접 업로드(서버를 거치지 않음), 보고서는 DB를
   RLS로 필터링해 본인 것만 조회.
 - **worker/** — 상시 실행되는 Python 프로세스. `videos` 테이블을 폴링하다가 새 업로드를
@@ -54,35 +54,33 @@
 2. Authentication → Providers에서 Email 로그인 활성화(기본값이면 그대로 둬도 됨).
 3. Project Settings → API 에서 `Project URL`, `anon public key`, `service_role key` 확인.
 
-### 1. 프론트엔드 (web/)
+### 1. 프론트엔드 / Vercel 배포
 
 ```bash
-cd web
-cp .env.example .env.local   # NEXT_PUBLIC_SUPABASE_URL / ANON_KEY 채우기
+cp .env.example .env         # Supabase / OpenAI / 워커 설정 채우기
 npm install
 npm run dev                  # http://localhost:3000
 ```
 
-AI 보고서 생성까지 사용하려면 `web/.env.local` 또는 배포 환경 변수에
-`OPENAI_API_KEY`도 추가한다. 모델은 `OPENAI_REPORT_MODEL`로 바꿀 수 있고,
-기본값은 `gpt-5.4-mini`다.
+Vercel에서는 Project Settings → Environment Variables에 `.env.example`의 값을 등록한다.
+Root Directory는 비워두거나 repository root로 둔다. `web/` 같은 하위 폴더를 지정하지 않는다.
 
 ### 2. 워커 (worker/)
 
 ```bash
 cd worker
-python3 -m venv .venv && source .venv/bin/activate
+python3.11 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env         # SUPABASE_URL / SUPABASE_SERVICE_KEY(!) 채우기
 python worker.py             # 계속 떠서 새 업로드를 감시
 ```
 
+- 워커도 repo root의 `.env`를 읽는다. `worker/.env`는 만들지 않는다.
 - 최초 실행 시 `ultralytics`가 `yolo11n-pose.pt` 가중치를 자동 다운로드합니다(인터넷 필요).
 - `ffmpeg` 바이너리가 시스템에 설치되어 있어야 합니다 (`brew install ffmpeg` 등).
 
 ### 3. 데모 흐름 확인
 
-1. `web` 앱에서 회원가입 → 로그인.
+1. 웹 앱에서 회원가입 → 로그인.
 2. 업로드 페이지에서 영상 파일 업로드 → 업로드 완료 뒤 `videos` row가 `status='uploaded'`로 생성됨.
 3. `worker.py`가 폴링 주기(기본 5초) 내에 이를 집어가 `processing`으로 바꾸고 분석 시작.
 4. 분석 완료 후 `status='done'` + `anomaly_events`에 탐지된 클립들이 채워짐.
