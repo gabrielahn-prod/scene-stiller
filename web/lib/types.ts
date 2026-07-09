@@ -30,3 +30,21 @@ export interface AnomalyEventRow {
   thumbnail_storage_path: string | null;
   created_at: string;
 }
+
+export type AiReportStatus = "queued" | "generating" | "done" | "failed";
+
+export interface AiReportRow {
+  id: string;
+  video_id: string;
+  user_id: string;
+  report_date: string;
+  title: string;
+  status: AiReportStatus;
+  report_json: Record<string, unknown>;
+  report_markdown: string | null;
+  ai_model: string | null;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+  generated_at: string | null;
+}

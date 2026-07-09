@@ -38,6 +38,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <Link href="/dashboard/upload" style={{ fontSize: 14, color: "#64748b" }}>
             업로드
           </Link>
+          <Link href="/dashboard/reports" style={{ fontSize: 14, color: "#64748b" }}>
+            보고서
+          </Link>
         </nav>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <span style={{ fontSize: 13, color: "#64748b" }}>
