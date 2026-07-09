@@ -9,6 +9,21 @@
 create extension if not exists "pgcrypto";
 
 -- ----------------------------------------------------------------------------
+-- 마이그레이션: 이미 테이블이 존재하는 기존 프로젝트에도 반영되도록
+-- (아래 create table ... if not exists 는 새 프로젝트에서만 동작하므로 별도 처리)
+-- ----------------------------------------------------------------------------
+alter table if exists public.videos
+  add column if not exists progress integer not null default 0;
+
+alter table if exists public.videos
+  drop constraint if exists videos_progress_check;
+alter table if exists public.videos
+  add constraint videos_progress_check check (progress between 0 and 100);
+
+alter table if exists public.ai_reports
+  drop constraint if exists ai_reports_video_id_key;
+
+-- ----------------------------------------------------------------------------
 -- 1. videos: 유저가 업로드한 원본 영상 + 처리 상태
 -- ----------------------------------------------------------------------------
 create table if not exists public.videos (
@@ -18,6 +33,7 @@ create table if not exists public.videos (
   storage_path   text not null,                 -- storage 버킷 'videos' 내 경로: {user_id}/{video_id}/{filename}
   status         text not null default 'uploaded'
                    check (status in ('uploaded', 'processing', 'done', 'failed')),
+  progress       integer not null default 0 check (progress between 0 and 100),
   error_message  text,
   duration_sec   double precision,
   fps            double precision,
@@ -69,8 +85,7 @@ create table if not exists public.ai_reports (
   error_message  text,
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now(),
-  generated_at   timestamptz,
-  unique (video_id)
+  generated_at   timestamptz
 );
 
 create index if not exists ai_reports_user_id_idx on public.ai_reports(user_id);

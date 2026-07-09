@@ -6,6 +6,7 @@ export interface VideoRow {
   filename: string;
   storage_path: string;
   status: VideoStatus;
+  progress: number;
   error_message: string | null;
   duration_sec: number | null;
   fps: number | null;

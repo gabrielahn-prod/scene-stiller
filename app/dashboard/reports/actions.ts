@@ -283,22 +283,19 @@ export async function createReportForVideo(formData: FormData) {
   const reportDate = new Date().toISOString().slice(0, 10);
   const title = `${video.filename} 분석 보고서`;
   const { data: reportResult, error } = await (supabase.from("ai_reports") as any)
-    .upsert(
-      {
-        video_id: video.id,
-        user_id: user.id,
-        report_date: reportDate,
-        title,
-        status: "generating",
-        report_json: {},
-        report_markdown: null,
-        ai_model: REPORT_MODEL,
-        error_message: null,
-        updated_at: new Date().toISOString(),
-        generated_at: null,
-      },
-      { onConflict: "video_id" }
-    )
+    .insert({
+      video_id: video.id,
+      user_id: user.id,
+      report_date: reportDate,
+      title,
+      status: "generating",
+      report_json: {},
+      report_markdown: null,
+      ai_model: REPORT_MODEL,
+      error_message: null,
+      updated_at: new Date().toISOString(),
+      generated_at: null,
+    })
     .select("*")
     .single();
   const report = reportResult as AiReportRow | null;

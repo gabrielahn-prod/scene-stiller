@@ -56,13 +56,18 @@ def fetch_next_pending_video(sb: Client) -> dict | None:
 
 
 def mark_processing(sb: Client, video_id: str) -> None:
-    sb.table("videos").update({"status": "processing"}).eq("id", video_id).execute()
+    sb.table("videos").update({"status": "processing", "progress": 0}).eq("id", video_id).execute()
+
+
+def update_progress(sb: Client, video_id: str, percent: int) -> None:
+    sb.table("videos").update({"progress": percent}).eq("id", video_id).execute()
 
 
 def mark_done(sb: Client, video_id: str, meta) -> None:
     sb.table("videos").update(
         {
             "status": "done",
+            "progress": 100,
             "duration_sec": meta.frame_count / meta.fps if meta.fps else None,
             "fps": meta.fps,
             "frame_width": meta.width,
@@ -105,6 +110,7 @@ def process_one(sb: Client, video_row: dict) -> None:
         # 1) 원본 영상 다운로드
         blob = sb.storage.from_("videos").download(storage_path)
         local_video_path.write_bytes(blob)
+        update_progress(sb, video_id, 3)
 
         # 2~4) 포즈 추출 -> 이상행동 탐지 -> 클립 추출
         meta, results = process_video(
@@ -116,6 +122,7 @@ def process_one(sb: Client, video_row: dict) -> None:
             stride_frames=ANOMALY_STRIDE_FRAMES,
             threshold_std=ANOMALY_THRESHOLD_STD,
             min_segment_frames=ANOMALY_MIN_SEGMENT_FRAMES,
+            on_progress=lambda pct: update_progress(sb, video_id, pct),
         )
 
         # 5) 클립/썸네일 업로드 + anomaly_events insert

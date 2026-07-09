@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { deleteReport } from "@/app/dashboard/reports/actions";
 import { createClient } from "@/lib/supabase/server";
 import type { AiReportRow, AnomalyEventRow, VideoRow } from "@/lib/types";
+import { PdfDownloadButton } from "./PdfDownloadButton";
 
 const STATUS_LABEL: Record<string, string> = {
   queued: "대기중",
@@ -50,7 +53,8 @@ export default async function ReportDetailPage({ params }: { params: { id: strin
             {report.ai_model && <> · 모델 {report.ai_model}</>}
           </p>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        <div className="no-print" style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          {report.status === "done" && <PdfDownloadButton />}
           <Link className="btn btn-secondary" href={video ? `/dashboard/videos/${video.id}` : "/dashboard/videos"}>
             원본 영상 보기
           </Link>
@@ -95,9 +99,9 @@ export default async function ReportDetailPage({ params }: { params: { id: strin
 
       {report.report_markdown && (
         <div className="card">
-          <pre style={{ whiteSpace: "pre-wrap", margin: 0, fontFamily: "inherit", lineHeight: 1.7, fontSize: 14 }}>
-            {report.report_markdown}
-          </pre>
+          <div className="report-markdown">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{report.report_markdown}</ReactMarkdown>
+          </div>
         </div>
       )}
     </div>

@@ -90,3 +90,54 @@ input:focus {
 .status-failed { background: #fee2e2; color: #b91c1c; }
 .status-queued { background: #e2e8f0; color: #475569; }
 .status-generating { background: #dbeafe; color: #1d4ed8; }
+
+.report-markdown {
+  font-size: 14px;
+  line-height: 1.8;
+}
+.report-markdown h1 { font-size: 20px; margin: 0 0 12px; }
+.report-markdown h2 { font-size: 16px; margin: 24px 0 8px; }
+.report-markdown h2:first-child { margin-top: 0; }
+.report-markdown h3 { font-size: 14px; margin: 16px 0 6px; }
+.report-markdown p { margin: 0 0 10px; }
+.report-markdown ul, .report-markdown ol { margin: 0 0 10px; padding-left: 22px; }
+.report-markdown li { margin-bottom: 4px; }
+.report-markdown strong { color: #0f172a; }
+.report-markdown hr { border: none; border-top: 1px solid #e2e8f0; margin: 16px 0; }
+
+.progress-bar-track {
+  width: 100%;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: #4f7cff;
+  transition: width 0.4s ease;
+}
+
+.spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+.btn-secondary .spinner {
+  border-color: rgba(15, 23, 42, 0.25);
+  border-top-color: #0f172a;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media print {
+  body { background: #ffffff; }
+  nav, .no-print { display: none !important; }
+  .card { box-shadow: none; border: none; padding: 0; }
+  .container { max-width: none; padding: 0; }
+}

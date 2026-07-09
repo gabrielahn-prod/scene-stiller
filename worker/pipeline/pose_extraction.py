@@ -59,8 +59,13 @@ def extract_pose_tracks(
     model_name: str = "yolo11n-pose.pt",
     tracker: str = DEFAULT_TRACKER,
     conf: float = 0.3,
+    frame_count: int = 0,
+    on_frame=None,
 ) -> dict[int, PersonTrack]:
-    """영상 전체를 순회하며 person_id별 포즈 시퀀스를 만든다."""
+    """영상 전체를 순회하며 person_id별 포즈 시퀀스를 만든다.
+
+    on_frame: (frame_idx, frame_count) -> None. 프레임마다 호출되는 진행률 콜백.
+    """
 
     model = YOLO(model_name)
     results = model.track(
@@ -75,6 +80,8 @@ def extract_pose_tracks(
     tracks: dict[int, PersonTrack] = {}
 
     for frame_idx, r in enumerate(results):
+        if on_frame is not None:
+            on_frame(frame_idx, frame_count)
         if r.boxes is None or r.boxes.id is None or r.keypoints is None:
             continue
 

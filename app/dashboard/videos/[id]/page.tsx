@@ -3,13 +3,8 @@ import { createReportForVideo } from "@/app/dashboard/reports/actions";
 import { deleteVideo } from "@/app/dashboard/videos/actions";
 import { createClient } from "@/lib/supabase/server";
 import type { AnomalyEventRow, VideoRow } from "@/lib/types";
-
-const STATUS_LABEL: Record<string, string> = {
-  uploaded: "대기중 (워커가 아직 픽업하지 않음)",
-  processing: "분석중 (포즈 추출 / 이상행동 탐지 진행)",
-  done: "완료",
-  failed: "실패",
-};
+import { VideoStatusBar } from "./VideoStatusBar";
+import { SubmitButton } from "@/app/components/SubmitButton";
 
 function formatTime(sec: number) {
   const m = Math.floor(sec / 60);
@@ -69,9 +64,7 @@ export default async function VideoDetailPage({ params }: { params: { id: string
           {video.status === "done" && (
             <form action={createReportForVideo}>
               <input type="hidden" name="videoId" value={video.id} />
-              <button className="btn" type="submit">
-                보고서 생성하기
-              </button>
+              <SubmitButton pendingText="보고서 생성 중...">보고서 생성하기</SubmitButton>
             </form>
           )}
           <form action={deleteVideo}>
@@ -82,10 +75,7 @@ export default async function VideoDetailPage({ params }: { params: { id: string
           </form>
         </div>
       </div>
-      <p style={{ color: "#64748b", fontSize: 13, marginBottom: 20 }}>
-        상태:{" "}
-        <span className={`status-badge status-${video.status}`}>{STATUS_LABEL[video.status]}</span>
-      </p>
+      <VideoStatusBar videoId={video.id} initialStatus={video.status} initialProgress={video.progress} />
 
       {video.status === "failed" && video.error_message && (
         <div className="card" style={{ borderColor: "#fecaca", marginBottom: 20, color: "#b91c1c" }}>
