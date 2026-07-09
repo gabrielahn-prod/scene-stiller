@@ -18,7 +18,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div>
       <header
         style={{
-          borderBottom: "1px solid #262b38",
+          borderBottom: "1px solid #e2e8f0",
+          background: "#ffffff",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -29,15 +30,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <Link href="/dashboard/videos" style={{ fontWeight: 700 }}>
             nonMarket
           </Link>
-          <Link href="/dashboard/videos" style={{ fontSize: 14, color: "#9aa4bf" }}>
+          <Link href="/dashboard/videos" style={{ fontSize: 14, color: "#64748b" }}>
             내 영상
           </Link>
-          <Link href="/dashboard/upload" style={{ fontSize: 14, color: "#9aa4bf" }}>
+          <Link href="/dashboard/upload" style={{ fontSize: 14, color: "#64748b" }}>
             업로드
           </Link>
         </nav>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <span style={{ fontSize: 13, color: "#9aa4bf" }}>
+          <span style={{ fontSize: 13, color: "#64748b" }}>
             {ownerName ? `${ownerName} 사장님` : loginId}
           </span>
           <form action={signOut}>

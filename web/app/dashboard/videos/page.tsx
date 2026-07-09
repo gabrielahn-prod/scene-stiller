@@ -28,7 +28,7 @@ export default async function VideosPage() {
       </div>
 
       {!videos || videos.length === 0 ? (
-        <div className="card" style={{ color: "#9aa4bf" }}>
+        <div className="card" style={{ color: "#64748b" }}>
           아직 업로드한 영상이 없습니다.
         </div>
       ) : (
@@ -42,7 +42,7 @@ export default async function VideosPage() {
             >
               <div>
                 <div style={{ fontWeight: 600 }}>{v.filename}</div>
-                <div style={{ fontSize: 12, color: "#9aa4bf", marginTop: 4 }}>
+                <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
                   {new Date(v.created_at).toLocaleString("ko-KR")}
                 </div>
               </div>

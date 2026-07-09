@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
 const INTERNAL_EMAIL_DOMAIN = "nonmarket.app";
@@ -46,6 +47,22 @@ function getOwnerMetadata(formData: FormData) {
   };
 }
 
+async function saveOwnerProfile(
+  supabase: any,
+  userId: string,
+  identifier: string,
+  metadata: ReturnType<typeof getOwnerMetadata>
+) {
+  await supabase.from("owner_profiles").upsert({
+    user_id: userId,
+    login_id: identifier,
+    owner_name: metadata.owner_name,
+    owner_age: metadata.owner_age,
+    store_count: metadata.store_count,
+    business_name: metadata.business_name,
+  });
+}
+
 export async function signIn(formData: FormData) {
   let email: string;
 
@@ -81,23 +98,40 @@ export async function signUp(formData: FormData) {
 
   const identifier = getText(formData, "identifier").toLowerCase();
   const password = getText(formData, "password");
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  const supabase = createClient();
-  const { error } = await supabase.auth.signUp({
+  if (!serviceRoleKey) {
+    redirect(
+      `/login?error=${encodeURIComponent(
+        "회원가입 설정이 필요합니다. Vercel에 SUPABASE_SERVICE_ROLE_KEY를 추가해주세요."
+      )}`
+    );
+  }
+
+  const admin = createAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceRoleKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const { data: createdUser, error: createError } = await admin.auth.admin.createUser({
     email,
     password,
-    options: {
-      data: {
-        ...metadata,
-        login_id: identifier,
-      },
+    email_confirm: true,
+    user_metadata: {
+      ...metadata,
+      login_id: identifier,
     },
   });
 
-  if (error) {
-    redirect(`/login?error=${encodeURIComponent(error.message)}`);
+  if (createError) {
+    redirect(`/login?error=${encodeURIComponent(createError.message)}`);
   }
 
+  const userId = createdUser.user?.id;
+  if (userId) {
+    await saveOwnerProfile(admin, userId, identifier, metadata);
+  }
+
+  const supabase = createClient();
   const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
   if (signInError) {

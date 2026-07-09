@@ -54,13 +54,13 @@ export default async function VideoDetailPage({ params }: { params: { id: string
   return (
     <div>
       <h1 style={{ fontSize: 20, marginBottom: 4 }}>{video.filename}</h1>
-      <p style={{ color: "#9aa4bf", fontSize: 13, marginBottom: 20 }}>
+      <p style={{ color: "#64748b", fontSize: 13, marginBottom: 20 }}>
         상태:{" "}
         <span className={`status-badge status-${video.status}`}>{STATUS_LABEL[video.status]}</span>
       </p>
 
       {video.status === "failed" && video.error_message && (
-        <div className="card" style={{ borderColor: "#5a1f1f", marginBottom: 20, color: "#ff9b9b" }}>
+        <div className="card" style={{ borderColor: "#fecaca", marginBottom: 20, color: "#b91c1c" }}>
           분석 실패: {video.error_message}
         </div>
       )}
@@ -77,11 +77,11 @@ export default async function VideoDetailPage({ params }: { params: { id: string
       </h2>
 
       {video.status !== "done" ? (
-        <div className="card" style={{ color: "#9aa4bf" }}>
+        <div className="card" style={{ color: "#64748b" }}>
           분석이 끝나면 이상행동 구간이 여기에 클립으로 표시됩니다.
         </div>
       ) : eventsWithUrls.length === 0 ? (
-        <div className="card" style={{ color: "#3ddc84" }}>
+        <div className="card" style={{ color: "#15803d" }}>
           이상행동으로 탐지된 구간이 없습니다.
         </div>
       ) : (
@@ -91,14 +91,14 @@ export default async function VideoDetailPage({ params }: { params: { id: string
               {ev.clipUrl ? (
                 <video src={ev.clipUrl} controls poster={ev.thumbUrl ?? undefined} style={{ width: "100%", borderRadius: 8, marginBottom: 10 }} />
               ) : (
-                <div style={{ color: "#9aa4bf", fontSize: 13, marginBottom: 10 }}>클립 없음</div>
+                <div style={{ color: "#64748b", fontSize: 13, marginBottom: 10 }}>클립 없음</div>
               )}
-              <div style={{ fontSize: 13, color: "#9aa4bf" }}>
+              <div style={{ fontSize: 13, color: "#64748b" }}>
                 {formatTime(ev.start_time_sec)} – {formatTime(ev.end_time_sec)} · person #{ev.track_id}
               </div>
               <div style={{ fontSize: 13, marginTop: 4 }}>
                 이상 점수 <strong>{ev.anomaly_score.toFixed(3)}</strong>{" "}
-                <span style={{ color: "#9aa4bf" }}>(임계값 {ev.threshold.toFixed(3)})</span>
+                <span style={{ color: "#64748b" }}>(임계값 {ev.threshold.toFixed(3)})</span>
               </div>
             </div>
           ))}

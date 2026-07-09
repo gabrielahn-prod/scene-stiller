@@ -92,8 +92,8 @@ export default function UploadForm() {
           ? "레코드 생성 중..."
           : "업로드 시작"}
       </button>
-      {errorMsg && <p style={{ color: "#ff6b6b", fontSize: 13 }}>{errorMsg}</p>}
-      <p style={{ color: "#9aa4bf", fontSize: 13 }}>
+      {errorMsg && <p style={{ color: "#dc2626", fontSize: 13 }}>{errorMsg}</p>}
+      <p style={{ color: "#64748b", fontSize: 13 }}>
         업로드가 끝나면 백엔드 워커가 자동으로 픽업해 포즈 추출 → 이상행동 탐지를 진행합니다.
         처리 상태는 영상 상세 페이지에서 확인할 수 있습니다.
       </p>
