@@ -1,4 +1,4 @@
-# nonMarket 이상행동 탐지 데모
+# Scene Stealer 이상행동 탐지 데모
 
 저장된 영상을 업로드하면 **포즈 추출 → 이상행동 클립 탐지**까지 자동으로 돌고,
 로그인한 유저는 본인이 올린 영상의 보고서(이상행동 클립 목록)만 볼 수 있는 데모.
@@ -63,6 +63,10 @@ npm install
 npm run dev                  # http://localhost:3000
 ```
 
+AI 보고서 생성까지 사용하려면 `web/.env.local` 또는 배포 환경 변수에
+`OPENAI_API_KEY`도 추가한다. 모델은 `OPENAI_REPORT_MODEL`로 바꿀 수 있고,
+기본값은 `gpt-5.4-mini`다.
+
 ### 2. 워커 (worker/)
 
 ```bash
@@ -79,10 +83,12 @@ python worker.py             # 계속 떠서 새 업로드를 감시
 ### 3. 데모 흐름 확인
 
 1. `web` 앱에서 회원가입 → 로그인.
-2. 업로드 페이지에서 영상 파일 업로드 → `videos` row가 `status='uploaded'`로 생성됨.
+2. 업로드 페이지에서 영상 파일 업로드 → 업로드 완료 뒤 `videos` row가 `status='uploaded'`로 생성됨.
 3. `worker.py`가 폴링 주기(기본 5초) 내에 이를 집어가 `processing`으로 바꾸고 분석 시작.
 4. 분석 완료 후 `status='done'` + `anomaly_events`에 탐지된 클립들이 채워짐.
 5. 영상 상세 페이지(`/dashboard/videos/[id]`)에서 원본 영상과 이상행동 클립들을 확인.
+6. 보고서 생성하기를 누르면 서버 액션이 OpenAI API로 경찰/보험사 제출용 보고서 초안을
+   생성해 `ai_reports`에 저장하고 `/dashboard/reports/[id]`에서 보여준다.
 
 ## 이상행동 탐지 방식 (현재 구현)
 

@@ -44,6 +44,7 @@ def fetch_next_pending_video(sb: Client) -> dict | None:
         sb.table("videos")
         .select("*")
         .eq("status", "uploaded")
+        .neq("storage_path", "")
         .order("created_at", desc=False)
         .limit(1)
         .execute()
