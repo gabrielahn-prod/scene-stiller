@@ -1,0 +1,14 @@
+# Supabase 연동
+supabase==2.9.1
+python-dotenv==1.0.1
+
+# 포즈 추출 + 추적 (YOLO11-pose, ByteTrack은 ultralytics 내장)
+ultralytics==8.3.28
+opencv-python==4.10.0.84
+
+# 이상행동 탐지 오토인코더
+torch==2.4.1
+numpy==1.26.4
+
+# ffmpeg-python은 쓰지 않고 시스템 ffmpeg 바이너리를 subprocess로 직접 호출한다.
+# (brew install ffmpeg / apt-get install ffmpeg 로 별도 설치 필요)

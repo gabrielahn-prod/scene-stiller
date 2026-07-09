@@ -1,0 +1,141 @@
+-- ============================================================================
+-- nonMarket-prod: 영상 업로드 -> 포즈 추출 -> 이상행동 탐지 -> 유저별 보고서
+-- Supabase 스키마 (테이블 + RLS + Storage 정책)
+--
+-- 실행 방법: Supabase 프로젝트의 SQL Editor에 이 파일 전체를 붙여넣고 실행.
+-- (CLI를 쓴다면: supabase db push 또는 psql -f supabase/schema.sql)
+-- ============================================================================
+
+create extension if not exists "pgcrypto";
+
+-- ----------------------------------------------------------------------------
+-- 1. videos: 유저가 업로드한 원본 영상 + 처리 상태
+-- ----------------------------------------------------------------------------
+create table if not exists public.videos (
+  id             uuid primary key default gen_random_uuid(),
+  user_id        uuid not null references auth.users(id) on delete cascade,
+  filename       text not null,
+  storage_path   text not null,                 -- storage 버킷 'videos' 내 경로: {user_id}/{video_id}/{filename}
+  status         text not null default 'uploaded'
+                   check (status in ('uploaded', 'processing', 'done', 'failed')),
+  error_message  text,
+  duration_sec   double precision,
+  fps            double precision,
+  frame_width    integer,
+  frame_height   integer,
+  created_at     timestamptz not null default now(),
+  processed_at   timestamptz
+);
+
+create index if not exists videos_user_id_idx on public.videos(user_id);
+create index if not exists videos_status_idx on public.videos(status);
+
+-- ----------------------------------------------------------------------------
+-- 2. anomaly_events: 워커가 탐지한 이상행동 구간(클립) 단위 결과
+-- ----------------------------------------------------------------------------
+create table if not exists public.anomaly_events (
+  id                 uuid primary key default gen_random_uuid(),
+  video_id           uuid not null references public.videos(id) on delete cascade,
+  user_id            uuid not null references auth.users(id) on delete cascade, -- 조회 편의를 위한 비정규화 컬럼
+  track_id           integer not null,          -- ByteTrack person id
+  start_frame        integer not null,
+  end_frame          integer not null,
+  start_time_sec     double precision not null,
+  end_time_sec       double precision not null,
+  anomaly_score      double precision not null, -- 오토인코더 재구성 오차 (클수록 이상)
+  threshold          double precision not null, -- 탐지 당시 임계값 (score > threshold 로 플래그됨)
+  clip_storage_path  text,                       -- storage 버킷 'clips' 내 경로
+  thumbnail_storage_path text,                   -- storage 버킷 'clips' 내 썸네일 경로
+  created_at         timestamptz not null default now()
+);
+
+create index if not exists anomaly_events_video_id_idx on public.anomaly_events(video_id);
+create index if not exists anomaly_events_user_id_idx on public.anomaly_events(user_id);
+
+-- ----------------------------------------------------------------------------
+-- Row Level Security: 자기 데이터만 보고 쓸 수 있음
+-- ----------------------------------------------------------------------------
+alter table public.videos enable row level security;
+alter table public.anomaly_events enable row level security;
+
+drop policy if exists "videos_select_own" on public.videos;
+create policy "videos_select_own"
+  on public.videos for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "videos_insert_own" on public.videos;
+create policy "videos_insert_own"
+  on public.videos for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "videos_update_own" on public.videos;
+create policy "videos_update_own"
+  on public.videos for update
+  using (auth.uid() = user_id);
+
+drop policy if exists "videos_delete_own" on public.videos;
+create policy "videos_delete_own"
+  on public.videos for delete
+  using (auth.uid() = user_id);
+
+drop policy if exists "anomaly_events_select_own" on public.anomaly_events;
+create policy "anomaly_events_select_own"
+  on public.anomaly_events for select
+  using (auth.uid() = user_id);
+
+-- anomaly_events 의 insert/update 는 워커(서비스 롤 키)만 수행하므로
+-- 별도의 유저용 insert/update 정책은 만들지 않는다. 서비스 롤 키는 RLS를 우회한다.
+
+-- ----------------------------------------------------------------------------
+-- Storage 버킷: videos(원본, private) / clips(이상행동 클립+썸네일, private)
+-- ----------------------------------------------------------------------------
+insert into storage.buckets (id, name, public)
+values ('videos', 'videos', false)
+on conflict (id) do nothing;
+
+insert into storage.buckets (id, name, public)
+values ('clips', 'clips', false)
+on conflict (id) do nothing;
+
+-- 업로드 경로 컨벤션: {user_id}/{video_id}/... 형태이므로
+-- 경로의 첫 세그먼트(foldername)가 자기 user_id와 같은 파일만 접근 허용.
+
+drop policy if exists "videos_bucket_select_own" on storage.objects;
+create policy "videos_bucket_select_own"
+  on storage.objects for select
+  using (
+    bucket_id = 'videos'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+drop policy if exists "videos_bucket_insert_own" on storage.objects;
+create policy "videos_bucket_insert_own"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'videos'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+drop policy if exists "videos_bucket_delete_own" on storage.objects;
+create policy "videos_bucket_delete_own"
+  on storage.objects for delete
+  using (
+    bucket_id = 'videos'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+drop policy if exists "clips_bucket_select_own" on storage.objects;
+create policy "clips_bucket_select_own"
+  on storage.objects for select
+  using (
+    bucket_id = 'clips'
+    and auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+-- clips 버킷에는 워커(서비스 롤 키)만 쓴다 -> insert 정책 없음 (서비스 롤 키는 RLS 우회).
+
+-- ----------------------------------------------------------------------------
+-- Realtime (선택): videos 테이블 변경을 대시보드에서 구독하려면 활성화
+-- ----------------------------------------------------------------------------
+alter publication supabase_realtime add table public.videos;
+alter publication supabase_realtime add table public.anomaly_events;
