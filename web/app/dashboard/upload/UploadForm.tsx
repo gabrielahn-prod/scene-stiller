@@ -12,6 +12,11 @@ export default function UploadForm() {
   );
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  function getSafeStorageFilename(input: File) {
+    const extension = input.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "");
+    return extension ? `source.${extension}` : "source";
+  }
+
   async function handleUpload() {
     if (!file) return;
     setErrorMsg(null);
@@ -43,7 +48,7 @@ export default function UploadForm() {
       return;
     }
 
-    const storagePath = `${user.id}/${videoRow.id}/${file.name}`;
+    const storagePath = `${user.id}/${videoRow.id}/${getSafeStorageFilename(file)}`;
 
     setProgress("uploading");
     const { error: uploadError } = await supabase.storage

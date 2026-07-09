@@ -23,11 +23,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "16px 20px",
+          gap: 16,
+          padding: "16px 24px",
+          flexWrap: "wrap",
         }}
       >
-        <nav style={{ display: "flex", gap: 16, alignItems: "center" }}>
-          <Link href="/dashboard/videos" style={{ fontWeight: 700 }}>
+        <nav style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+          <Link href="/dashboard/videos" style={{ fontWeight: 700, textDecoration: "none" }}>
             Scene Stealer
           </Link>
           <Link href="/dashboard/videos" style={{ fontSize: 14, color: "#64748b" }}>
