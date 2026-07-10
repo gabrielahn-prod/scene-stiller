@@ -8,11 +8,7 @@ export default function LoginPage({
 }) {
   return (
     <div className="container" style={{ maxWidth: 460 }}>
-      <h1 style={{ fontSize: 22, marginBottom: 4 }}>Scene Stealer 이상행동 탐지 데모</h1>
-      <p style={{ color: "#64748b", fontSize: 14, marginBottom: 24 }}>
-        아이디와 비밀번호로 로그인해 업로드한 영상의 이상행동 탐지 보고서를 확인할 수 있습니다.
-      </p>
-
+      <h1 style={{ fontSize: 22, marginBottom: 4 }}>Scene Stealer</h1>
       <form className="card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <label style={{ fontSize: 13, color: "#64748b" }}>
           아이디
