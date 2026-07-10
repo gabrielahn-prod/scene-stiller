@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/login/actions";
@@ -29,7 +30,20 @@ export default async function DashboardLayout({ children }: { children: React.Re
         }}
       >
         <nav style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
-          <Link href="/dashboard/videos" style={{ fontWeight: 700, textDecoration: "none" }}>
+          <Link
+            href="/dashboard/videos"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontWeight: 800,
+              fontSize: 17,
+              letterSpacing: "-0.02em",
+              color: "#3654e0",
+              textDecoration: "none",
+            }}
+          >
+            <Image src="/logo.png" alt="Scene Stealer" width={28} height={28} />
             Scene Stealer
           </Link>
           <Link href="/dashboard/upload" style={{ fontSize: 14, color: "#64748b" }}>

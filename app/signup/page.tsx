@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { signUp } from "@/app/login/actions";
 
@@ -8,7 +9,12 @@ export default function SignupPage({
 }) {
   return (
     <div className="container" style={{ maxWidth: 520 }}>
-      <h1 style={{ fontSize: 22, marginBottom: 4 }}>Scene Stealer 회원가입</h1>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+        <Image src="/logo.png" alt="Scene Stealer" width={36} height={36} />
+        <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.02em", color: "#3654e0", margin: 0 }}>
+          Scene Stealer 회원가입
+        </h1>
+      </div>
       <p style={{ color: "#64748b", fontSize: 14, marginBottom: 24 }}>
         사장님 정보와 아이디를 등록하면 바로 영상 분석 서비스를 사용할 수 있습니다.
       </p>

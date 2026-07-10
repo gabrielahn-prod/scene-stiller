@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { signIn } from "./actions";
 
@@ -8,7 +9,20 @@ export default function LoginPage({
 }) {
   return (
     <div className="container" style={{ maxWidth: 460 }}>
-      <h1 style={{ fontSize: 22, marginBottom: 4 }}>Scene Stealer</h1>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, marginBottom: 24 }}>
+        <Image src="/logo.png" alt="Scene Stealer" width={72} height={72} priority />
+        <h1
+          style={{
+            fontSize: 28,
+            fontWeight: 800,
+            letterSpacing: "-0.02em",
+            color: "#3654e0",
+            margin: 0,
+          }}
+        >
+          Scene Stealer
+        </h1>
+      </div>
       <form className="card" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <label style={{ fontSize: 13, color: "#64748b" }}>
           아이디
