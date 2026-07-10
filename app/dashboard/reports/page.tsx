@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { deleteReport } from "@/app/dashboard/reports/actions";
 import { createClient } from "@/lib/supabase/server";
+import { getUserPlan, PLAN_INFO } from "@/lib/plan";
 import type { AiReportRow } from "@/lib/types";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -12,6 +13,11 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default async function ReportsPage() {
   const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const canGenerateReports = PLAN_INFO[getUserPlan(user)].canGenerateReports;
+
   const { data: reportRows } = await (supabase.from("ai_reports") as any)
     .select("*")
     .order("created_at", { ascending: false });
@@ -20,6 +26,12 @@ export default async function ReportsPage() {
   return (
     <div>
       <h1 style={{ fontSize: 20, marginBottom: 16 }}>보고서</h1>
+
+      {!canGenerateReports && (
+        <div className="card" style={{ marginBottom: 16, background: "#eff6ff", borderColor: "#bfdbfe", color: "#1d4ed8" }}>
+          AI 보고서 생성은 Premium 플랜 전용 기능입니다. 현재 Pro 플랜에서는 영상 분석 결과만 확인할 수 있어요.
+        </div>
+      )}
 
       {!reports || reports.length === 0 ? (
         <div className="card" style={{ color: "#64748b" }}>

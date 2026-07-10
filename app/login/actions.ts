@@ -29,6 +29,7 @@ function getOwnerMetadata(formData: FormData) {
   const ownerAge = Number(getText(formData, "ownerAge"));
   const storeCount = Number(getText(formData, "storeCount"));
   const businessName = getText(formData, "businessName");
+  const plan = getText(formData, "plan");
 
   if (!ownerName) throw new Error("사장님 이름을 입력해주세요.");
   if (!Number.isInteger(ownerAge) || ownerAge < 1 || ownerAge > 120) {
@@ -38,12 +39,16 @@ function getOwnerMetadata(formData: FormData) {
     throw new Error("매장 수를 올바르게 입력해주세요.");
   }
   if (!businessName) throw new Error("사업자 이름을 입력해주세요.");
+  if (plan !== "pro" && plan !== "premium") {
+    throw new Error("요금제를 선택해주세요.");
+  }
 
   return {
     owner_name: ownerName,
     owner_age: ownerAge,
     store_count: storeCount,
     business_name: businessName,
+    plan,
   };
 }
 
@@ -60,6 +65,7 @@ async function saveOwnerProfile(
     owner_age: metadata.owner_age,
     store_count: metadata.store_count,
     business_name: metadata.business_name,
+    plan: metadata.plan,
   });
 }
 

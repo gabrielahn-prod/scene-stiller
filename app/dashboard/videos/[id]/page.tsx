@@ -3,6 +3,7 @@ import { createReportForVideo } from "@/app/dashboard/reports/actions";
 import { deleteVideo } from "@/app/dashboard/videos/actions";
 import { createClient } from "@/lib/supabase/server";
 import type { AnomalyEventRow, VideoRow } from "@/lib/types";
+import { getUserPlan, PLAN_INFO } from "@/lib/plan";
 import { VideoStatusBar } from "./VideoStatusBar";
 import { SubmitButton } from "@/app/components/SubmitButton";
 
@@ -12,8 +13,19 @@ function formatTime(sec: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export default async function VideoDetailPage({ params }: { params: { id: string } }) {
+export default async function VideoDetailPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { error?: string };
+}) {
   const supabase = createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const canGenerateReports = PLAN_INFO[getUserPlan(user)].canGenerateReports;
 
   const { data: video } = await supabase
     .from("videos")
@@ -61,11 +73,20 @@ export default async function VideoDetailPage({ params }: { params: { id: string
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 4 }}>
         <h1 style={{ fontSize: 20, margin: 0 }}>{video.filename}</h1>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          {video.status === "done" && (
+          {video.status === "done" && canGenerateReports && (
             <form action={createReportForVideo}>
               <input type="hidden" name="videoId" value={video.id} />
               <SubmitButton pendingText="보고서 생성 중...">보고서 생성하기</SubmitButton>
             </form>
+          )}
+          {video.status === "done" && !canGenerateReports && (
+            <span
+              className="btn btn-secondary"
+              style={{ opacity: 0.6, cursor: "not-allowed" }}
+              title="Premium 플랜으로 업그레이드하면 AI 보고서를 생성할 수 있어요"
+            >
+              보고서 생성은 Premium 전용
+            </span>
           )}
           <form action={deleteVideo}>
             <input type="hidden" name="videoId" value={video.id} />
@@ -76,6 +97,12 @@ export default async function VideoDetailPage({ params }: { params: { id: string
         </div>
       </div>
       <VideoStatusBar videoId={video.id} initialStatus={video.status} initialProgress={video.progress} />
+
+      {searchParams.error && (
+        <div className="card" style={{ borderColor: "#fecaca", marginBottom: 20, color: "#b91c1c" }}>
+          {searchParams.error}
+        </div>
+      )}
 
       {video.status === "failed" && video.error_message && (
         <div className="card" style={{ borderColor: "#fecaca", marginBottom: 20, color: "#b91c1c" }}>

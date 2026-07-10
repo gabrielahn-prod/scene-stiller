@@ -32,6 +32,16 @@ export interface AnomalyEventRow {
   created_at: string;
 }
 
+export interface OwnerProfileRow {
+  user_id: string;
+  login_id: string;
+  owner_name: string;
+  owner_age: number;
+  store_count: number;
+  business_name: string;
+  plan: "pro" | "premium";
+}
+
 export type AiReportStatus = "queued" | "generating" | "done" | "failed";
 
 export interface AiReportRow {

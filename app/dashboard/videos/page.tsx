@@ -2,6 +2,7 @@ import Link from "next/link";
 import { deleteVideo } from "@/app/dashboard/videos/actions";
 import { createClient } from "@/lib/supabase/server";
 import type { VideoRow } from "@/lib/types";
+import { getUserPlan, PLAN_INFO } from "@/lib/plan";
 
 const STATUS_LABEL: Record<string, string> = {
   uploaded: "대기중",
@@ -12,6 +13,11 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default async function VideosPage() {
   const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const planInfo = PLAN_INFO[getUserPlan(user)];
+
   // RLS 정책(videos_select_own)이 자기 user_id 행만 반환하도록 보장한다.
   const { data: videos } = await supabase
     .from("videos")
@@ -21,12 +27,15 @@ export default async function VideosPage() {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
         <h1 style={{ fontSize: 20 }}>내 영상</h1>
         <Link className="btn" href="/dashboard/upload">
           + 새 영상 업로드
         </Link>
       </div>
+      <p style={{ fontSize: 13, color: "#64748b", marginTop: 0, marginBottom: 16 }}>
+        {planInfo.label} 플랜은 영상을 업로드일로부터 {planInfo.retentionDays}일간 클라우드에 보관합니다.
+      </p>
 
       {!videos || videos.length === 0 ? (
         <div className="card" style={{ color: "#64748b" }}>

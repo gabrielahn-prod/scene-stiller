@@ -24,6 +24,46 @@ alter table if exists public.ai_reports
   drop constraint if exists ai_reports_video_id_key;
 
 -- ----------------------------------------------------------------------------
+-- 0. owner_profiles: 회원가입 시 입력하는 사장님/매장 정보 + 구독 플랜
+-- ----------------------------------------------------------------------------
+create table if not exists public.owner_profiles (
+  user_id        uuid primary key references auth.users(id) on delete cascade,
+  login_id       text not null,
+  owner_name     text not null,
+  owner_age      integer not null,
+  store_count    integer not null,
+  business_name  text not null,
+  plan           text not null default 'pro' check (plan in ('pro', 'premium')),
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+
+alter table if exists public.owner_profiles
+  add column if not exists plan text not null default 'pro';
+alter table if exists public.owner_profiles
+  drop constraint if exists owner_profiles_plan_check;
+alter table if exists public.owner_profiles
+  add constraint owner_profiles_plan_check check (plan in ('pro', 'premium'));
+
+alter table public.owner_profiles enable row level security;
+
+drop policy if exists "owner_profiles_select_own" on public.owner_profiles;
+create policy "owner_profiles_select_own"
+  on public.owner_profiles for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "owner_profiles_upsert_own" on public.owner_profiles;
+create policy "owner_profiles_upsert_own"
+  on public.owner_profiles for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "owner_profiles_update_own" on public.owner_profiles;
+create policy "owner_profiles_update_own"
+  on public.owner_profiles for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- ----------------------------------------------------------------------------
 -- 1. videos: 유저가 업로드한 원본 영상 + 처리 상태
 -- ----------------------------------------------------------------------------
 create table if not exists public.videos (

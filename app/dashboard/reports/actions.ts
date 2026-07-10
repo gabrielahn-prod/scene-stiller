@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getUserPlan, PLAN_INFO } from "@/lib/plan";
 import type { AiReportRow, AnomalyEventRow, VideoRow } from "@/lib/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -261,6 +262,10 @@ export async function createReportForVideo(formData: FormData) {
 
   if (!user) {
     redirect("/login");
+  }
+
+  if (!PLAN_INFO[getUserPlan(user)].canGenerateReports) {
+    redirect(`/dashboard/videos/${videoId}?error=${encodeURIComponent("보고서 생성은 Premium 플랜에서만 가능합니다.")}`);
   }
 
   const { data: video } = await supabase
