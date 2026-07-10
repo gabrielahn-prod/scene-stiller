@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 export default function UploadForm() {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
+  const [cameraLocation, setCameraLocation] = useState("");
   const [progress, setProgress] = useState<"idle" | "uploading" | "creating" | "done" | "error">(
     "idle"
   );
@@ -52,7 +53,14 @@ export default function UploadForm() {
     setProgress("creating");
     const { data: videoRow, error: insertError } = await supabase
       .from("videos")
-      .insert({ id: videoId, user_id: user.id, filename: file.name, storage_path: storagePath, status: "uploaded" })
+      .insert({
+        id: videoId,
+        user_id: user.id,
+        filename: file.name,
+        storage_path: storagePath,
+        status: "uploaded",
+        camera_location: cameraLocation.trim() || null,
+      })
       .select()
       .single();
 
@@ -77,6 +85,16 @@ export default function UploadForm() {
         accept="video/mp4,video/quicktime,video/webm"
         onChange={(e) => setFile(e.target.files?.[0] ?? null)}
       />
+      <label style={{ fontSize: 13, color: "#64748b" }}>
+        카메라 위치 (선택)
+        <input
+          type="text"
+          value={cameraLocation}
+          onChange={(e) => setCameraLocation(e.target.value)}
+          placeholder="예: 카운터 상단, 출입구, 창고 입구"
+          style={{ marginTop: 6 }}
+        />
+      </label>
       <button
         className="btn"
         disabled={!file || progress === "uploading" || progress === "creating"}

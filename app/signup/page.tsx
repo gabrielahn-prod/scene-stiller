@@ -147,6 +147,15 @@ export default function SignupPage({
               style={{ marginTop: 6 }}
             />
           </label>
+          <label style={{ fontSize: 13, color: "#64748b" }}>
+            매장 주소 (선택)
+            <input
+              type="text"
+              name="businessAddress"
+              placeholder="예: 서울시 마포구 와우산로 94"
+              style={{ marginTop: 6 }}
+            />
+          </label>
         </div>
 
         {searchParams.error && (

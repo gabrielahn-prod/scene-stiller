@@ -12,6 +12,7 @@ export interface VideoRow {
   fps: number | null;
   frame_width: number | null;
   frame_height: number | null;
+  camera_location: string | null;
   created_at: string;
   processed_at: string | null;
 }
@@ -39,10 +40,12 @@ export interface OwnerProfileRow {
   owner_age: number;
   store_count: number;
   business_name: string;
+  business_address: string | null;
   plan: "pro" | "premium";
 }
 
 export type AiReportStatus = "queued" | "generating" | "done" | "failed";
+export type AiReportType = "text" | "photo";
 
 export interface AiReportRow {
   id: string;
@@ -51,6 +54,7 @@ export interface AiReportRow {
   report_date: string;
   title: string;
   status: AiReportStatus;
+  report_type: AiReportType;
   report_json: Record<string, unknown>;
   report_markdown: string | null;
   ai_model: string | null;

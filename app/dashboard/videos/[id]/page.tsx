@@ -1,11 +1,10 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { createReportForVideo } from "@/app/dashboard/reports/actions";
 import { deleteVideo } from "@/app/dashboard/videos/actions";
 import { createClient } from "@/lib/supabase/server";
 import type { AnomalyEventRow, VideoRow } from "@/lib/types";
 import { getUserPlan, PLAN_INFO } from "@/lib/plan";
 import { VideoStatusBar } from "./VideoStatusBar";
-import { SubmitButton } from "@/app/components/SubmitButton";
 
 function formatTime(sec: number) {
   const m = Math.floor(sec / 60);
@@ -74,10 +73,9 @@ export default async function VideoDetailPage({
         <h1 style={{ fontSize: 20, margin: 0 }}>{video.filename}</h1>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
           {video.status === "done" && canGenerateReports && (
-            <form action={createReportForVideo}>
-              <input type="hidden" name="videoId" value={video.id} />
-              <SubmitButton pendingText="보고서 생성 중...">보고서 생성하기</SubmitButton>
-            </form>
+            <Link className="btn" href={`/dashboard/videos/${video.id}/report`} style={{ textDecoration: "none" }}>
+              보고서 생성하기
+            </Link>
           )}
           {video.status === "done" && !canGenerateReports && (
             <span

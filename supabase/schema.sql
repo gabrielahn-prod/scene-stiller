@@ -23,23 +23,36 @@ alter table if exists public.videos
 alter table if exists public.ai_reports
   drop constraint if exists ai_reports_video_id_key;
 
+alter table if exists public.videos
+  add column if not exists camera_location text;
+
+alter table if exists public.ai_reports
+  add column if not exists report_type text not null default 'text';
+alter table if exists public.ai_reports
+  drop constraint if exists ai_reports_report_type_check;
+alter table if exists public.ai_reports
+  add constraint ai_reports_report_type_check check (report_type in ('text', 'photo'));
+
 -- ----------------------------------------------------------------------------
 -- 0. owner_profiles: 회원가입 시 입력하는 사장님/매장 정보 + 구독 플랜
 -- ----------------------------------------------------------------------------
 create table if not exists public.owner_profiles (
-  user_id        uuid primary key references auth.users(id) on delete cascade,
-  login_id       text not null,
-  owner_name     text not null,
-  owner_age      integer not null,
-  store_count    integer not null,
-  business_name  text not null,
-  plan           text not null default 'pro' check (plan in ('pro', 'premium')),
-  created_at     timestamptz not null default now(),
-  updated_at     timestamptz not null default now()
+  user_id          uuid primary key references auth.users(id) on delete cascade,
+  login_id         text not null,
+  owner_name       text not null,
+  owner_age        integer not null,
+  store_count      integer not null,
+  business_name    text not null,
+  business_address text,
+  plan             text not null default 'pro' check (plan in ('pro', 'premium')),
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now()
 );
 
 alter table if exists public.owner_profiles
   add column if not exists plan text not null default 'pro';
+alter table if exists public.owner_profiles
+  add column if not exists business_address text;
 alter table if exists public.owner_profiles
   drop constraint if exists owner_profiles_plan_check;
 alter table if exists public.owner_profiles

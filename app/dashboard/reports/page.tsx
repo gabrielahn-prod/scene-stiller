@@ -52,6 +52,9 @@ export default async function ReportsPage() {
                 </div>
               </Link>
               <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <span className="status-badge" style={{ background: "#e2e8f0", color: "#475569" }}>
+                  {report.report_type === "photo" ? "사진 근거" : "AI 텍스트"}
+                </span>
                 <span className={`status-badge status-${report.status}`}>{STATUS_LABEL[report.status]}</span>
                 <form action={deleteReport}>
                   <input type="hidden" name="reportId" value={report.id} />

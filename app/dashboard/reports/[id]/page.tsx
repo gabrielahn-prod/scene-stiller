@@ -43,6 +43,24 @@ export default async function ReportDetailPage({ params }: { params: { id: strin
     .order("start_time_sec", { ascending: true })
     .returns<AnomalyEventRow[]>();
 
+  const isPhotoReport = report.report_type === "photo";
+
+  const eventsWithUrls = isPhotoReport
+    ? await Promise.all(
+        (events ?? []).map(async (ev) => {
+          const clipUrl = ev.clip_storage_path
+            ? (await supabase.storage.from("clips").createSignedUrl(ev.clip_storage_path, 3600)).data
+                ?.signedUrl
+            : null;
+          const thumbUrl = ev.thumbnail_storage_path
+            ? (await supabase.storage.from("clips").createSignedUrl(ev.thumbnail_storage_path, 3600))
+                .data?.signedUrl
+            : null;
+          return { ...ev, clipUrl, thumbUrl };
+        })
+      )
+    : [];
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 12 }}>
@@ -50,7 +68,8 @@ export default async function ReportDetailPage({ params }: { params: { id: strin
           <h1 style={{ fontSize: 20, margin: 0 }}>{report.title}</h1>
           <p style={{ color: "#64748b", fontSize: 13, margin: "8px 0 0" }}>
             상태: <span className={`status-badge status-${report.status}`}>{STATUS_LABEL[report.status]}</span>
-            {report.ai_model && <> · 모델 {report.ai_model}</>}
+            {" · "}
+            {isPhotoReport ? "사진 근거 자료" : "AI 텍스트 보고서"}
           </p>
         </div>
         <div className="no-print" style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
@@ -79,30 +98,47 @@ export default async function ReportDetailPage({ params }: { params: { id: strin
         </div>
       )}
 
-      <div className="card" style={{ marginBottom: 20 }}>
-        <h2 style={{ fontSize: 15, marginTop: 0 }}>분석 근거</h2>
-        <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.7 }}>
-          <div>영상: {video?.filename ?? report.video_id}</div>
-          <div>탐지 구간: {events?.length ?? 0}건</div>
-          {events && events.length > 0 && (
-            <div style={{ marginTop: 8 }}>
-              {events.map((event) => (
-                <div key={event.id}>
-                  {formatTime(event.start_time_sec)}-{formatTime(event.end_time_sec)} · person #{event.track_id} · 점수{" "}
-                  {event.anomaly_score.toFixed(3)}
+      {isPhotoReport ? (
+        <>
+          <div className="card" style={{ marginBottom: 20, fontSize: 13, color: "#64748b" }}>
+            영상: {video?.filename ?? report.video_id} · 탐지 구간 {eventsWithUrls.length}건
+          </div>
+          {eventsWithUrls.length === 0 ? (
+            <div className="card" style={{ color: "#15803d" }}>탐지된 이상행동 구간이 없습니다.</div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+              {eventsWithUrls.map((ev) => (
+                <div key={ev.id} className="card">
+                  {ev.clipUrl ? (
+                    <video
+                      src={ev.clipUrl}
+                      controls
+                      poster={ev.thumbUrl ?? undefined}
+                      style={{ width: "100%", borderRadius: 8, marginBottom: 10 }}
+                    />
+                  ) : (
+                    <div style={{ color: "#64748b", fontSize: 13, marginBottom: 10 }}>클립 없음</div>
+                  )}
+                  <div style={{ fontSize: 13, color: "#64748b" }}>
+                    {formatTime(ev.start_time_sec)}-{formatTime(ev.end_time_sec)} · person #{ev.track_id}
+                  </div>
+                  <div style={{ fontSize: 13, marginTop: 4 }}>
+                    이상 점수 <strong>{ev.anomaly_score.toFixed(3)}</strong>{" "}
+                    <span style={{ color: "#64748b" }}>(임계값 {ev.threshold.toFixed(3)})</span>
+                  </div>
                 </div>
               ))}
             </div>
           )}
-        </div>
-      </div>
-
-      {report.report_markdown && (
-        <div className="card">
-          <div className="report-markdown">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{report.report_markdown}</ReactMarkdown>
+        </>
+      ) : (
+        report.report_markdown && (
+          <div className="card">
+            <div className="report-markdown">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{report.report_markdown}</ReactMarkdown>
+            </div>
           </div>
-        </div>
+        )
       )}
     </div>
   );

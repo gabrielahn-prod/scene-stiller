@@ -29,6 +29,7 @@ function getOwnerMetadata(formData: FormData) {
   const ownerAge = Number(getText(formData, "ownerAge"));
   const storeCount = Number(getText(formData, "storeCount"));
   const businessName = getText(formData, "businessName");
+  const businessAddress = getText(formData, "businessAddress");
   const plan = getText(formData, "plan");
 
   if (!ownerName) throw new Error("사장님 이름을 입력해주세요.");
@@ -48,6 +49,7 @@ function getOwnerMetadata(formData: FormData) {
     owner_age: ownerAge,
     store_count: storeCount,
     business_name: businessName,
+    business_address: businessAddress || null,
     plan,
   };
 }
@@ -65,6 +67,7 @@ async function saveOwnerProfile(
     owner_age: metadata.owner_age,
     store_count: metadata.store_count,
     business_name: metadata.business_name,
+    business_address: metadata.business_address,
     plan: metadata.plan,
   });
 }
