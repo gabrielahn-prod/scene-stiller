@@ -111,13 +111,25 @@ export default async function ReportDetailPage({ params }: { params: { id: strin
                 <div key={ev.id} className="card">
                   {ev.clipUrl ? (
                     <video
+                      className="screen-only"
                       src={ev.clipUrl}
                       controls
                       poster={ev.thumbUrl ?? undefined}
                       style={{ width: "100%", borderRadius: 8, marginBottom: 10 }}
                     />
                   ) : (
-                    <div style={{ color: "#64748b", fontSize: 13, marginBottom: 10 }}>클립 없음</div>
+                    <div className="screen-only" style={{ color: "#64748b", fontSize: 13, marginBottom: 10 }}>클립 없음</div>
+                  )}
+                  {ev.thumbUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      className="print-only"
+                      src={ev.thumbUrl}
+                      alt=""
+                      style={{ width: "100%", borderRadius: 8, marginBottom: 10 }}
+                    />
+                  ) : (
+                    <div className="print-only" style={{ color: "#64748b", fontSize: 13, marginBottom: 10 }}>썸네일 없음</div>
                   )}
                   <div style={{ fontSize: 13, color: "#64748b" }}>
                     {formatTime(ev.start_time_sec)}-{formatTime(ev.end_time_sec)} · person #{ev.track_id}

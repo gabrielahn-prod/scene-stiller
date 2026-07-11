@@ -135,9 +135,13 @@ input:focus {
   to { transform: rotate(360deg); }
 }
 
+.print-only { display: none; }
+
 @media print {
   body { background: #ffffff; }
   nav, .no-print { display: none !important; }
   .card { box-shadow: none; border: none; padding: 0; }
   .container { max-width: none; padding: 0; }
+  .screen-only { display: none !important; }
+  .print-only { display: block !important; }
 }
